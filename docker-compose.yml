@@ -1,0 +1,5 @@
+nginx:
+  image: nginx
+  net: testnet
+  ports:
+    - "8080:80"
