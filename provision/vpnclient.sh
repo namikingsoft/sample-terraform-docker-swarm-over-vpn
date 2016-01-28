@@ -1,8 +1,7 @@
 #!/bin/bash -e
 
-# arguments
-ID=$1
-MASTER_IP=$2
+# variable
+source /tmp/tfvars
 
 # install package
 apt-get install -y curl gcc make
@@ -41,10 +40,10 @@ systemctl start vpnclient
 # setting
 ACCOUNT=cluster
 NICNAME=vlan0
-SERVER="$MASTER_IP:443"
+SERVER="$MASTER_GLOBAL_IP:443"
 HUBNAME=cluster
-USERNAME=user
-USERPASS=something
+USERNAME="$VPN_USERNAME"
+USERPASS="$VPN_PASSWORD"
 while true; do
   sleep 1
   vpncmd localhost /CLIENT /CMD RemoteDisable
@@ -65,8 +64,8 @@ vpncmd localhost /CLIENT /CMD AccountStartupSet $ACCOUNT
 vpncmd localhost /CLIENT /CMD AccountConnect $ACCOUNT
 
 # add ip
-if [ "$ID" != "0" ]; then
+if [ "$NODE_INDEX" != "0" ]; then
   dhclient vpn_$NICNAME
 else
-  ip addr add 192.168.30.2/24 dev vpn_$NICNAME
+  ip addr add $VPN_MASTERIP/24 dev vpn_$NICNAME
 fi

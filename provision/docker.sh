@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-# arguments
-ID=$1
-IP=$(
+# variable
+source /tmp/tfvars
+VPN_SELF_IP=$(
   ip addr show vpn_vlan0 \
   | grep -o -e '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' \
   | head -n1
@@ -22,12 +22,15 @@ systemctl daemon-reload
 service docker restart
 
 # swarm manager
-if [ "$ID" = "0" ]; then
+if [ "$NODE_INDEX" = "0" ]; then
   docker run -d --name=swarm-agent-master \
     -v=/etc/docker:/etc/docker --net=host --restart=always\
-    swarm manage -H=0.0.0.0:3375 --strategy=spread --advertise=${IP}:2375 consul://localhost:8500
+    swarm manage -H=0.0.0.0:3375 \
+      --strategy=spread \
+      --replication --advertise=${VPN_SELF_IP}:3375 \
+      consul://localhost:8500
 fi
 
 # swarm agent
 docker run -d --name swarm-agent --net=host --restart=always \
-  swarm join --advertise=${IP}:2375 consul://localhost:8500
+  swarm join --advertise=${VPN_SELF_IP}:2375 consul://localhost:8500

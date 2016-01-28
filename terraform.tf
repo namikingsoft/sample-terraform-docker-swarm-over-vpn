@@ -2,7 +2,9 @@ variable "do_token" {}
 variable "pub_key" {}
 variable "pvt_key" {}
 variable "ssh_fingerprint" {}
-variable "vpn_master_ip" {}
+variable "vpn_masterip" {}
+variable "vpn_username" {}
+variable "vpn_password" {}
 
 provider "digitalocean" {
   token = "${var.do_token}"
@@ -13,7 +15,7 @@ resource "digitalocean_droplet" "node" {
   name = "swarm-node${count.index}"
   region = "sgp1"
   size = "512mb"
-  count = 2
+  count = 1
   private_networking = false
   ssh_keys = [
     "${var.ssh_fingerprint}"
@@ -42,11 +44,18 @@ resource "digitalocean_droplet" "node" {
   }
   provisioner "remote-exec" {
     inline = [
+      "echo NODE_INDEX='${count.index}' > /tmp/tfvars",
+      "echo VPN_MASTERIP='${var.vpn_masterip}' >> /tmp/tfvars",
+      "echo VPN_USERNAME='${var.vpn_username}' >> /tmp/tfvars",
+      "echo VPN_PASSWORD='${var.vpn_password}' >> /tmp/tfvars",
+      "echo SELF_GLOBAL_IP='${self.ipv4_address}' >> /tmp/tfvars",
+      "echo MASTER_GLOBAL_IP='${digitalocean_droplet.node.0.ipv4_address}' >> /tmp/tfvars",
       "chmod +x /tmp/*.sh",
-      "/tmp/vpnserver.sh ${count.index}",
-      "/tmp/vpnclient.sh ${count.index} ${digitalocean_droplet.node.0.ipv4_address}",
-      "/tmp/consul.sh ${count.index } ${var.vpn_master_ip}",
-      "/tmp/docker.sh ${count.index} ${self.ipv4_address}",
+      "/tmp/vpnserver.sh",
+      "/tmp/vpnclient.sh",
+      "/tmp/consul.sh",
+      "/tmp/docker.sh",
+      "rm /tmp/tfvars /tmp/*.sh",
     ]
   }
 }

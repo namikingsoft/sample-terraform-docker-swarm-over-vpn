@@ -1,9 +1,8 @@
 #!/bin/bash -e
 
-# arguments
-ID=$1
-MASTER_IP=$2
-MY_VPN_IP=$(
+# variable
+source /tmp/tfvars
+VPN_SELF_IP=$(
   ip addr show vpn_vlan0 \
   | grep -o -e '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' \
   | head -n1
@@ -37,13 +36,13 @@ EOS
 
 # setting
 mkdir -p /etc/consul.d
-if [ "$ID" = "0" ]; then
+if [ "$NODE_INDEX" = "0" ]; then
 cat << EOS > /etc/consul.d/config.json
 {
   "server": true,
   "bootstrap": true,
-  "bind_addr": "$MY_VPN_IP",
-  "node_name": "swarm-node$ID",
+  "bind_addr": "$VPN_SELF_IP",
+  "node_name": "swarm-node$NODE_INDEX",
   "datacenter": "swarm0",
   "ui_dir": "/var/local/consul/webui",
   "data_dir": "/var/local/consul/data",
@@ -55,9 +54,9 @@ else
 cat << EOS > /etc/consul.d/config.json
 {
   "server": false,
-  "start_join": ["$MASTER_IP"],
-  "bind_addr": "$MY_VPN_IP",
-  "node_name": "swarm-node$ID",
+  "start_join": ["$VPN_MASTERIP"],
+  "bind_addr": "$VPN_SELF_IP",
+  "node_name": "swarm-node$NODE_INDEX",
   "datacenter": "swarm0",
   "ui_dir": "/var/local/consul/webui",
   "data_dir": "/var/local/consul/data",

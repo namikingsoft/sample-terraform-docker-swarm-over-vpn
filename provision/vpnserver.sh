@@ -1,10 +1,10 @@
 #!/bin/bash -e
 
-# arguments
-ID=$1
+# variable
+source /tmp/tfvars
 
 # exit if not master
-if [ "$ID" != "0" ]; then
+if [ "$NODE_INDEX" != "0" ]; then
   exit 0
 fi
 
@@ -45,8 +45,8 @@ systemctl start vpnserver
 # setting
 HUBNAME=cluster
 HUBPASS=password
-USERNAME=user
-USERPASS=something
+USERNAME="$VPN_USERNAME"
+USERPASS="$VPN_PASSWORD"
 SHAREDKEY=sharedkey
 while true; do
   sleep 1
